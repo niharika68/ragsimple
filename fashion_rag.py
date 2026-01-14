@@ -10,8 +10,7 @@ import os
 from typing import List, Optional
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -71,9 +70,6 @@ class FashionRAG:
             persist_directory=self.persist_directory
         )
         
-        # Persist the database
-        self.vectorstore.persist()
-        
         print(f"Knowledge base created with {len(split_docs)} document chunks.")
         
     def load_knowledge_base(self):
@@ -105,7 +101,7 @@ class FashionRAG:
         # Create LLM
         llm = ChatOpenAI(
             temperature=temperature,
-            model_name=model,
+            model=model,
             openai_api_key=self.api_key
         )
         
