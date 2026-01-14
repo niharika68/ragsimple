@@ -50,6 +50,20 @@ export OPENAI_API_KEY=your-api-key-here
 
 ## Usage
 
+### Demo Mode (No API Key Required)
+
+To see the system structure and capabilities without an API key:
+
+```bash
+python demo.py
+```
+
+This will show you:
+- Knowledge base statistics
+- Topics covered
+- Document processing details
+- Example queries you can ask
+
 ### Interactive Mode (Default)
 
 Run the script without arguments to enter interactive mode:
@@ -121,7 +135,10 @@ ragsimple/
 ├── main.py              # Main application script
 ├── fashion_rag.py       # RAG system implementation
 ├── fashion_data.py      # Fashion knowledge base
+├── demo.py              # Demo script (no API key needed)
+├── test_fashion_rag.py  # Unit tests
 ├── requirements.txt     # Python dependencies
+├── .env.example         # Example environment file
 ├── .env                 # OpenAI API key (create this)
 ├── .gitignore          # Git ignore rules
 └── README.md           # This file

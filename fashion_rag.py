@@ -8,12 +8,14 @@ information from a knowledge base and generating contextual answers.
 
 import os
 from typing import List, Optional
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain.docstore.document import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.chat_models import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document
 from fashion_data import FASHION_DOCUMENTS
 
 
@@ -107,15 +109,37 @@ class FashionRAG:
             openai_api_key=self.api_key
         )
         
-        # Create retrieval QA chain
-        self.qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=self.vectorstore.as_retriever(
-                search_kwargs={"k": 3}  # Retrieve top 3 most relevant chunks
-            ),
-            return_source_documents=True
+        # Create retriever
+        retriever = self.vectorstore.as_retriever(
+            search_kwargs={"k": 3}  # Retrieve top 3 most relevant chunks
         )
+        
+        # Create prompt template
+        template = """You are a helpful fashion advisor. Use the following pieces of context to answer the question at the end.
+If you don't know the answer based on the context, just say that you don't know, don't try to make up an answer.
+Keep your answer concise and helpful.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+        
+        prompt = ChatPromptTemplate.from_template(template)
+        
+        # Create chain using LCEL
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+        
+        self.qa_chain = (
+            {"context": retriever | format_docs, "question": RunnablePassthrough()}
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+        
+        self.retriever = retriever
         
         print("QA chain created successfully.")
         
@@ -133,11 +157,12 @@ class FashionRAG:
         if self.qa_chain is None:
             raise ValueError("QA chain not created. Run create_qa_chain() first.")
         
-        result = self.qa_chain({"query": question})
-        answer = result["result"]
+        # Get answer
+        answer = self.qa_chain.invoke(question)
         
         if include_sources:
-            sources = result.get("source_documents", [])
+            # Retrieve source documents
+            sources = self.retriever.get_relevant_documents(question)
             if sources:
                 answer += "\n\nSources:\n"
                 for i, doc in enumerate(sources, 1):

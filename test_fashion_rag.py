@@ -49,8 +49,8 @@ def test_fashion_rag_initialization_with_api_key():
 
 def test_document_chunking():
     """Test that documents are properly chunked."""
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
-    from langchain.docstore.document import Document
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_core.documents import Document
     
     # Create sample document
     sample_doc = "This is a test. " * 100
